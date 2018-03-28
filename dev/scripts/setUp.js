@@ -1,4 +1,5 @@
 import React from 'react';
+import ActiveSession from './activeSession';
 
 class SetUp extends React.Component {
     constructor() {
@@ -7,41 +8,92 @@ class SetUp extends React.Component {
             startLat:'',
             startLong: '',
             setUpComplete: false,
-            setUpPostponed: false
+            setUpPostponed: false,
+            triggerNotification: false
         }
     this.captureCurrentLocation=this.captureCurrentLocation.bind(this);
     this.locationCaptured = this.locationCaptured.bind(this);
     this.getDistanceFromLatLonInKm = this.getDistanceFromLatLonInKm.bind(this);
     this.evaluateDistance = this.evaluateDistance.bind(this);
-    // this.deg2rad = this.deg2rad.bind(this);
+    this.watchLocation = this.watchLocation.bind(this);
     }
 
+    // Capture user's current position once user clicks YES
     captureCurrentLocation(event) {
         event.preventDefault();
         if(navigator.geolocation){
-            navigator.geolocation.getCurrentPosition(this.locationCaptured);
+            // Call locationCaptured function if current position is sucessfully captured
+            navigator.geolocation.getCurrentPosition(this.locationCaptured, this.alertError);
+            
+        }
+        else (alert("The browser does not support HTML5"))
+    }
+
+    // notify the user if the  position could not be retrieved
+    alertError(error) {
+        alert("The current position is not available");
+    }
+
+    watchLocation() {
+        if(navigator.geolocation){
+            // Call locationCaptured function if current position is sucessfully captured
             let watch = navigator.geolocation.watchPosition(this.evaluateDistance);
         }
     }
 
+    // Reset the default state of home address with the captured long and lat
     locationCaptured(position) {
         this.setState({
             startLat: position.coords.latitude,
-            startLong: position.coords.longitude
-        })
-        console.log(position);
+            startLong: position.coords.longitude,
+            setUpComplete: true
+        // POST captured long and lat to the /users endpoint to save the data
+        }, () => fetch('http://localhost:3000/users/', {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "lat": position.coords.latitude,
+                "long": position.coords.longitude
+            })
+            }).then(function(response) {
+                return response.json()
+                }).then(function(json) {
+                console.log('parsed json: ', json);
+                }).catch(function(ex) {
+                console.log('parsing failed: ', ex)
+        }))
+        this.watchLocation();
     }
     
     evaluateDistance(position) {
-        this.getDistanceFromLatLonInKm(this.state.startLat,this.state.startLong, position.coords.latitude, position.coords.longitude);
-        // >0.2?
-        // console.log('far')
-        // :console.log('not far')
+        this.getDistanceFromLatLonInKm(this.state.startLat,this.state.startLong, position.coords.latitude, position.coords.longitude)>0.2?
+        fetch('http://localhost:3000/outside/')
+        .then(function(response) {
+            return response.json()
+        }).then(function(json) {
+            console.log('parsed json: ', json)
+        }).catch(function(ex) {
+            console.log('parsing failed: ', ex)
+        })
+        // return <Notification />
+        :
+        fetch('http://localhost:3000/inside/')
+        .then(function(response) {
+            return response.json()
+        }).then(function(json) {
+            console.log('parsed json: ', json)
+        }).catch(function(ex) {
+            console.log('parsing failed: ', ex)
+        })
     }
 
+    // Use Haversine formula to calculate the distance between home and current position based on respective long and lat values
     getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
         var R = 6371; // Radius of the earth in km
-        var dLat = (lat2-lat1) * (Math.PI/180);  // deg2rad below
+        var dLat = (lat2-lat1) * (Math.PI/180);
         var dLon = (lon2-lon1) * (Math.PI/180); 
         var a = 
           Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -50,16 +102,11 @@ class SetUp extends React.Component {
           ; 
         var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         var d = R * c; // Distance in km
-        console.log(d);
+        return d;
     }
-      
-    // watchLocation() {
-    //     if(navigator.geolocation){
-    //         let watch = navigator.geolocation.watchPosition(this.locationCaptured);
-    //         console.log(watch);
-    //     }
-    // }
 
+
+    // Reset setUpPostponed state to fire user notification when button NO is clicked
     postponeSetUp(event) {
         event.preventDefault();
         this.setState({
@@ -73,6 +120,13 @@ class SetUp extends React.Component {
                 <h1>Are you home?</h1>
                 <button onClick={(event) => this.captureCurrentLocation(event)}>YES</button>
                 <button onClick={(event) => this.postponeSetUp(event)}>NO</button>
+                {
+                    this.state.setUpComplete?
+                    <div className="modal">
+                        <p>Session is active</p>
+                    </div>
+                    :null
+                }
                 {
                     this.state.setUpPostponed?
                     <div className="modal">

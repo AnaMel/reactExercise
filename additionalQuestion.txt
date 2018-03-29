@@ -1,0 +1,8 @@
+This is a simple app so it's not expected to support hundreds of thousands of concurrent users... but if it did,
+what kind of changes would you need to make?
+
+
+Right now, I am calling /outside & /inside endpoints every time I recieve new coordinates. If the application was used by thousands of users, it would introduce a very high load of requests on the API. 
+In order to reduce the number of calls, I would consider:
+1. adding maxAge to Geolocation.getCurrentPosition() in order to re-use cached coordinates when possible instead of requesting and evaluating new ones every time
+2. avoid calling API every time coordinates change and only do it when the change is significant enough

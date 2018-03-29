@@ -1,5 +1,4 @@
 import React from 'react';
-import ActiveSession from './activeSession';
 
 class SetUp extends React.Component {
     constructor() {
@@ -27,28 +26,29 @@ class SetUp extends React.Component {
         event.preventDefault();
         if(navigator.geolocation){
             // Call locationCaptured function if current position is sucessfully captured
-            navigator.geolocation.getCurrentPosition(this.locationCaptured, this.alertError);
-            
+            // On error, alert user that the location could not be retrieved
+            navigator.geolocation.getCurrentPosition(this.locationCaptured, this.alertError,{timeout:2000});
         }
+        // Alert user if the browser does not support HTML5 navigator
         else (alert("The browser does not support HTML5 navigator"))
     }
 
-    // notify the user if the  position could not be retrieved
-    alertError(error) {
-        alert("The current position is not available");
-    }
-
+    // Function to start watching user's location once set up is complete
     watchLocation() {
         if(navigator.geolocation){
-            // Call locationCaptured function if current position is sucessfully captured
-            // if (this.state.setUpComplete){
+            // Call evaluateDistance function if current position is sucessfully captured
+            // On error, alert user that the location could not be retrieved
                 this.setState({
-                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance, this.alertError)
+                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance, this.alertError,{timeout:2000})
                 })
-            // }
-            // else {}
+            }
+            // Alert user if the browser does not support HTML5 navigator
+            else (alert("The browser does not support HTML5 navigator"))
         }
-        else (alert("The browser does not support HTML5 navigator"))
+        
+    // Function to notify users that the position could not be retrieved
+    alertError(error) {
+        alert("The current position is not available");
     }
 
     // Reset the default state of home address with the captured long and lat
@@ -56,8 +56,12 @@ class SetUp extends React.Component {
         this.setState({
             startLat: position.coords.latitude,
             startLong: position.coords.longitude,
+            // Once setUpComplete state is reset
+            // Active Session modal window is rendered to UI
             setUpComplete: true
-        // POST captured long and lat to the /users endpoint to save the data
+        // Once state is reset using captured home coordinates
+        // use callback function to POST captured long and lat to the /users endpoint to save the data
+        // 
         }, () => fetch('http://localhost:3000/users/', {
             method: 'post',
             headers: {
@@ -70,33 +74,38 @@ class SetUp extends React.Component {
             })
             }).then(function(response) {
                 return response.json()
-                }).then(function(json) {
+                }).then((json) => {
                 console.log('parsed json: ', json);
+                // Once returned promise is resolved 
+                // Call function to start watching user's location
+                this.watchLocation();
                 }).catch(function(ex) {
                 console.log('parsing failed: ', ex)
         }))
-        this.watchLocation();
     }
     
+    // evaluateDistance function is a simuation of calling back-end to evaluate user's distance from initial location
+    // The function calls endpoint /outside if a user is further away from home than 200m
+    // The function calls endpoint /inside if a user is away by 200 or less meters
     evaluateDistance(position) {
-        let newLocation;
         this.getDistanceFromLatLonInKm(this.state.startLat,this.state.startLong, position.coords.latitude, position.coords.longitude)>0.2?
         fetch('http://localhost:3000/outside/')
         .then(function(response) {
             return response.json()
         }).then((json) => {
             console.log('parsed json: ', json);
+            // Call displayNotification function once the returned promise is resolved
             this.displayNotification(json);
         }).catch(function(ex) {
             console.log('parsing failed: ', ex)}
         )
-        // return <Notification />
         :
         fetch('http://localhost:3000/inside/')
         .then(function(response) {
             return response.json()
         }).then((json) => {
             console.log('parsed json: ', json);
+            // Call displayNotification function once the returned promise is resolved
             this.displayNotification(json);
         }).catch(function(ex) {
             console.log('parsing failed: ', ex)
@@ -111,13 +120,11 @@ class SetUp extends React.Component {
         var a = 
           Math.sin(dLat/2) * Math.sin(dLat/2) +
           Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * 
-          Math.sin(dLon/2) * Math.sin(dLon/2)
-          ; 
+          Math.sin(dLon/2) * Math.sin(dLon/2); 
         var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         var d = R * c; // Distance in km
         return d;
     }
-
 
     // Reset setUpPostponed state to fire user notification when button NO is clicked
     postponeSetUp(event) {
@@ -127,12 +134,15 @@ class SetUp extends React.Component {
         })
     }
 
+    // Function to reset any true-value state to remove modal window from UI
+    // The reason it is a seperate function from postponeSetUp is to re-use it for other modal windows in the future
     closeModal() {
         this.setState({
             setUpPostponed: false
         })
     }
 
+    // FUnction to entirely reset the active session
     resetSession(event) {
         event.preventDefault();
         this.setState({
@@ -141,9 +151,11 @@ class SetUp extends React.Component {
             setUpComplete: false,
             notificationTrigerred: false
         })
+        // Clear watching position function
         navigator.geolocation.clearWatch(this.state.watchId);
     }
 
+    // Handle response returned from the back-end and display 'lock door' notification if necessary
     displayNotification(json) {
         json.map((location) => {
             location.outside?
@@ -151,7 +163,6 @@ class SetUp extends React.Component {
                 (   
                     alert("Do not forget to lock the door!"),
                     this.setState({notificationTrigerred:true})
-
                 )
                 :null
             )
@@ -160,7 +171,6 @@ class SetUp extends React.Component {
                 this.setState({notificationTrigerred:false})
                 :null
             )
-            // console.log(location.outside);
         })
     }
 

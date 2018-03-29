@@ -4,7 +4,6 @@ import {
   Route, Link } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import SetUp from './setUp';
-import ActiveSession from './activeSession';
 
 class App extends React.Component {
     render() {

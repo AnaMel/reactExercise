@@ -9,7 +9,8 @@ class SetUp extends React.Component {
             startLong: '',
             setUpComplete: false,
             setUpPostponed: false,
-            notificationTrigerred: false
+            notificationTrigerred: false,
+            watchId: ''
         }
     this.captureCurrentLocation=this.captureCurrentLocation.bind(this);
     this.locationCaptured = this.locationCaptured.bind(this);
@@ -18,6 +19,7 @@ class SetUp extends React.Component {
     this.watchLocation = this.watchLocation.bind(this);
     this.displayNotification = this.displayNotification.bind(this);
     this.closeModal = this.closeModal.bind(this);
+    this.resetSession = this.resetSession.bind(this);
     }
 
     // Capture user's current position once user clicks YES
@@ -39,7 +41,12 @@ class SetUp extends React.Component {
     watchLocation() {
         if(navigator.geolocation){
             // Call locationCaptured function if current position is sucessfully captured
-            let watch = navigator.geolocation.watchPosition(this.evaluateDistance);
+            // if (this.state.setUpComplete){
+                this.setState({
+                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance)
+                })
+            // }
+            // else {}
         }
         else (alert("The browser does not support HTML5 navigator"))
     }
@@ -126,6 +133,17 @@ class SetUp extends React.Component {
         })
     }
 
+    resetSession(event) {
+        event.preventDefault();
+        this.setState({
+            startLat:'',
+            startLong: '',
+            setUpComplete: false,
+            notificationTrigerred: false
+        })
+        navigator.geolocation.clearWatch(this.state.watchId);
+    }
+
     displayNotification(json) {
         json.map((location) => {
             location.outside?
@@ -159,6 +177,7 @@ class SetUp extends React.Component {
                     <div className="modal">
                         <div>
                             <p>Session is active</p>
+                            <button onClick={(event) => this.resetSession(event)}>Finish Session</button>
                         </div>
                     </div>
                     :null

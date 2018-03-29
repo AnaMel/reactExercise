@@ -27,7 +27,7 @@ class SetUp extends React.Component {
         if(navigator.geolocation){
             // Call locationCaptured function if current position is sucessfully captured
             // On error, alert user that the location could not be retrieved
-            navigator.geolocation.getCurrentPosition(this.locationCaptured, this.alertError,{timeout:2000});
+            navigator.geolocation.getCurrentPosition(this.locationCaptured, this.alertError,{timeout:20000});
         }
         // Alert user if the browser does not support HTML5 navigator
         else (alert("The browser does not support HTML5 navigator"))
@@ -39,7 +39,7 @@ class SetUp extends React.Component {
             // Call evaluateDistance function if current position is sucessfully captured
             // On error, alert user that the location could not be retrieved
                 this.setState({
-                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance, this.alertError,{timeout:2000})
+                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance, this.alertError,{timeout:20000})
                 })
             }
             // Alert user if the browser does not support HTML5 navigator

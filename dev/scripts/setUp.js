@@ -9,13 +9,15 @@ class SetUp extends React.Component {
             startLong: '',
             setUpComplete: false,
             setUpPostponed: false,
-            triggerNotification: false
+            notificationTrigerred: false
         }
     this.captureCurrentLocation=this.captureCurrentLocation.bind(this);
     this.locationCaptured = this.locationCaptured.bind(this);
     this.getDistanceFromLatLonInKm = this.getDistanceFromLatLonInKm.bind(this);
     this.evaluateDistance = this.evaluateDistance.bind(this);
     this.watchLocation = this.watchLocation.bind(this);
+    this.displayNotification = this.displayNotification.bind(this);
+    this.closeModal = this.closeModal.bind(this);
     }
 
     // Capture user's current position once user clicks YES
@@ -26,7 +28,7 @@ class SetUp extends React.Component {
             navigator.geolocation.getCurrentPosition(this.locationCaptured, this.alertError);
             
         }
-        else (alert("The browser does not support HTML5"))
+        else (alert("The browser does not support HTML5 navigator"))
     }
 
     // notify the user if the  position could not be retrieved
@@ -39,6 +41,7 @@ class SetUp extends React.Component {
             // Call locationCaptured function if current position is sucessfully captured
             let watch = navigator.geolocation.watchPosition(this.evaluateDistance);
         }
+        else (alert("The browser does not support HTML5 navigator"))
     }
 
     // Reset the default state of home address with the captured long and lat
@@ -69,22 +72,25 @@ class SetUp extends React.Component {
     }
     
     evaluateDistance(position) {
+        let newLocation;
         this.getDistanceFromLatLonInKm(this.state.startLat,this.state.startLong, position.coords.latitude, position.coords.longitude)>0.2?
         fetch('http://localhost:3000/outside/')
         .then(function(response) {
             return response.json()
-        }).then(function(json) {
-            console.log('parsed json: ', json)
+        }).then((json) => {
+            console.log('parsed json: ', json);
+            this.displayNotification(json);
         }).catch(function(ex) {
-            console.log('parsing failed: ', ex)
-        })
+            console.log('parsing failed: ', ex)}
+        )
         // return <Notification />
         :
         fetch('http://localhost:3000/inside/')
         .then(function(response) {
             return response.json()
-        }).then(function(json) {
-            console.log('parsed json: ', json)
+        }).then((json) => {
+            console.log('parsed json: ', json);
+            this.displayNotification(json);
         }).catch(function(ex) {
             console.log('parsing failed: ', ex)
         })
@@ -114,23 +120,56 @@ class SetUp extends React.Component {
         })
     }
 
+    closeModal() {
+        this.setState({
+            setUpPostponed: false
+        })
+    }
+
+    displayNotification(json) {
+        json.map((location) => {
+            location.outside?
+            (this.state.notificationTrigerred === false?
+                (   
+                    alert("Do not forget to lock the door!"),
+                    this.setState({notificationTrigerred:true})
+
+                )
+                :null
+            )
+            : 
+            (this.state.notificationTrigerred === true?
+                this.setState({notificationTrigerred:false})
+                :null
+            )
+            // console.log(location.outside);
+        })
+    }
+
     render() {
         return(
             <form>
                 <h1>Are you home?</h1>
-                <button onClick={(event) => this.captureCurrentLocation(event)}>YES</button>
-                <button onClick={(event) => this.postponeSetUp(event)}>NO</button>
+                <div className="formControls">
+                    <button onClick={(event) => this.captureCurrentLocation(event)}>YES</button>
+                    <button onClick={(event) => this.postponeSetUp(event)}>NO</button>
+                </div>
                 {
                     this.state.setUpComplete?
                     <div className="modal">
-                        <p>Session is active</p>
+                        <div>
+                            <p>Session is active</p>
+                        </div>
                     </div>
                     :null
                 }
                 {
                     this.state.setUpPostponed?
                     <div className="modal">
-                        <p>Please complete the set up once you are back home!</p>
+                        <div>
+                            <a href="#" className="closePopUp" onClick={this.closeModal}><i className="fas fa-times"></i></a>
+                            <p>Please complete the set up once you are back home!</p>
+                        </div>
                     </div>
                     :null
                 }

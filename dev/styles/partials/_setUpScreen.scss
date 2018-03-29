@@ -1,0 +1,36 @@
+main {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 75px;
+        background-color: white;
+        box-shadow: 0 1px 8px 0 rgba(0,0,0,.2), 0 3px 4px 0 rgba(0,0,0,.14), 0 3px 3px -2px rgba(0,0,0,.12);
+        border-radius: 5px;
+        @media (max-width: 480px) {
+            padding: 75px 40px;
+        }
+    }
+    .formControls {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 50px;
+        width: 100%;
+        button {
+            padding: 15px 40px;
+            border: none;
+            background-color: $button-green;
+            border-radius: 5px;
+            color: $main-ltgrey;
+            &:hover,
+            &:focus {
+                background-color: $button-ltgreen;
+            }
+        }
+    }
+}
+

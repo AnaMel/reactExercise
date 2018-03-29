@@ -1,0 +1,48 @@
+.modal {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(lightgray, 0.9);
+    position: fixed;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    div {
+        padding: 250px 200px;
+        position: relative;
+        background-color: white;
+        @media (max-width: 960px) {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            padding: 0;
+            
+        }
+        @media (max-width: 480px) {
+            padding: 0 25px;
+        }
+    }
+    p {
+        font-size: 2rem;
+        @media (max-width: 480px) {
+            font-size: 1.6rem;
+        }
+    }
+    .closePopUp {
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        font-size: 3rem;
+        &:hover,
+        &:focus,
+        &:visited {
+            color: $main-dark;
+        }
+
+    }
+}

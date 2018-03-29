@@ -43,7 +43,7 @@ class SetUp extends React.Component {
             // Call locationCaptured function if current position is sucessfully captured
             // if (this.state.setUpComplete){
                 this.setState({
-                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance)
+                    watchId: navigator.geolocation.watchPosition(this.evaluateDistance, this.alertError)
                 })
             // }
             // else {}

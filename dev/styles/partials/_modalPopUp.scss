@@ -13,12 +13,12 @@
         padding: 250px 200px;
         position: relative;
         background-color: white;
+        text-align: center;
         @media (max-width: 960px) {
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            text-align: center;
             width: 100%;
             padding: 0;
             
@@ -32,6 +32,9 @@
         @media (max-width: 480px) {
             font-size: 1.6rem;
         }
+    }
+    button {
+        margin-top: 25px;
     }
     .closePopUp {
         position: absolute;
